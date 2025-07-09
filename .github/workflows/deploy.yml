@@ -21,13 +21,7 @@ jobs:
     env:
       CODE_ROOT: src
       SOLUTION_NAME: SampleAspireSolution
-      AWS_REGION: eu-west-2
-      AWS_ACCOUNT_ID: 676673797772
-      ECR_REGISTRY: 676673797772.dkr.ecr.eu-west-2.amazonaws.com
-      # IMAGE_TAG: ${{ github.sha }}
-      IMAGE_TAG: latest
-      AWS_ACCESS_KEY_ID: AKIAZ3DHGX2GGPLVNKGF
-      AWS_SECRET_ACCESS_KEY: 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
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
 
     steps:
       - name: 🧾 Checkout repo
@@ -64,7 +58,7 @@ jobs:
           aws ecr describe-repositories --repository-names "$SERVICE_NAME_LOWER" || \
           aws ecr create-repository --repository-name "$SERVICE_NAME_LOWER"
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
 
       - name: 🐳 Build Docker image
         run: |
@@ -77,12 +71,6 @@ jobs:
           IMAGE_NAME="${ECR_REGISTRY}/${SERVICE_NAME_LOWER}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
           docker push $IMAGE_NAME:$IMAGE_TAG
-        # env:
-        #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: 📝 Echo environment input
-        run: 'echo "Environment: ${{ github.event.inputs.environment }}"'
 
       - name: 🚀 Deploy to ECS
         uses: ./.github/actions/ecr-deploy
@@ -93,4 +81,4 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
