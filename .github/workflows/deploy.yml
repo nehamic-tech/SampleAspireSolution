@@ -1,0 +1,93 @@
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to (dev, prod, etc.)"
+        required: true
+        default: "dev"
+
+jobs:
+  deploy:
+    name: Build and Deploy Services
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        #service: [Service1, Service2, Service3]
+        service: [Service3]
+
+    env:
+      SOLUTION_ROOT: SampleAspireSolution
+      AWS_REGION: eu-west-2
+      AWS_ACCOUNT_ID: 676673797772
+      ECR_REGISTRY: 676673797772.dkr.ecr.eu-west-2.amazonaws.com
+      # IMAGE_TAG: ${{ github.sha }}
+      IMAGE_TAG: latest
+      AWS_ACCESS_KEY_ID: AKIAZ3DHGX2GGPLVNKGF
+      AWS_SECRET_ACCESS_KEY: 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
+
+    steps:
+      - name: 🧾 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: 📦 Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_ROOT }}/Infrastructure.sln
+
+      - name: ✨ Generate lowercase service names
+        run: echo "SERVICE_NAME_LOWER=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: 🏷️ Read version from service.yaml
+        id: config
+        run: |
+          IMAGE_TAG=$(yq '.service.version // "latest"' ${{ env.SERVICE_ROOT }}/${{ matrix.service }}/.iac/service.yaml)
+          echo "version=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: 🛠️ Build code
+        run: |
+          dotnet build ${{ env.SOLUTION_ROOT }}/${{ matrix.service }}/${{ matrix.service }}.csproj --no-restore --configuration Release
+
+      - name: 🔐 Log in to ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🏗️ Create ECR repository if not exists
+        run: |
+          aws ecr describe-repositories --repository-names "$SERVICE_NAME_LOWER" || \
+          aws ecr create-repository --repository-name "$SERVICE_NAME_LOWER"
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Build Docker image
+        run: |
+          IMAGE_NAME="${ECR_REGISTRY}/${SERVICE_NAME_LOWER}"
+          IMAGE_TAG="${{ steps.config.outputs.version }}"
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.SOLUTION_ROOT }}/${{ matrix.service }}/Dockerfile .
+
+      - name: 🚀 Push Docker image to ECR
+        run: |
+          IMAGE_NAME="${ECR_REGISTRY}/${SERVICE_NAME_LOWER}"
+          IMAGE_TAG="${{ steps.config.outputs.version }}"
+          docker push $IMAGE_NAME:$IMAGE_TAG
+        # env:
+        #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: 📝 Echo environment input
+        run: 'echo "Environment: ${{ github.event.inputs.environment }}"'
+
+      - name: 🚀 Deploy to ECS
+        uses: Brett-Henning/Q-Logistical-Infrastructure/github-action_ecs-deploy@develop
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          service_path: ${{ env.SOLUTION_ROOT }}/${{ matrix.service }}
+          image_uri: ${{ env.ECR_REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
