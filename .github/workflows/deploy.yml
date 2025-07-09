@@ -9,7 +9,7 @@ on:
         default: "dev"
 
 jobs:
-  deploy:
+  build:
     name: Build and Deploy Services
     runs-on: ubuntu-latest
 
@@ -84,13 +84,13 @@ jobs:
       - name: 📝 Echo environment input
         run: 'echo "Environment: ${{ github.event.inputs.environment }}"'
 
-      # - name: 🚀 Deploy to ECS
-      #   uses: nehamic-tech/ecr-deploy-action@main
-      #   with:
-      #     environment: ${{ github.event.inputs.environment }}
-      #     service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
-      #     image_uri: ${{ env.ECR_REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: ${{ env.AWS_REGION }}
+      - name: 🚀 Deploy to ECS
+        uses: nehamic-tech/ecr-deploy-action@main
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
+          image_uri: ${{ env.ECR_REGISTRY }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
