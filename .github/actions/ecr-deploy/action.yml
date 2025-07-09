@@ -25,7 +25,6 @@ runs:
   #image: "docker.io/nehamictech/iac-image:latest"
   image: "ghcr.io/nehamic-tech/iac-image:latest"
   env:
-    GITHUB_TOKEN: ${{ secrets.GH_PLATFORM_TOKEN }}
     ENVIRONMENT: ${{ inputs.environment }}
     IMAGE_URI: ${{ inputs.image_uri }}
     SERVICE_PATH: ${{ inputs.service_path }}
