@@ -47,7 +47,7 @@ jobs:
       - name: 🏷️ Read version from service.yaml
         id: config
         run: |
-          IMAGE_TAG=$(yq '.service.version // "latest"' ${{ env.SERVICE_ROOT }}/${{ matrix.service }}/.iac/service.yaml)
+          IMAGE_TAG=$(yq '.service.version // "latest"' ${{ env.SOLUTION_ROOT }}/${{ matrix.service }}/.iac/service.yaml)
           echo "version=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: 🛠️ Build code
