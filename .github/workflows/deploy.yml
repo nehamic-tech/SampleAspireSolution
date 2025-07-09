@@ -1,4 +1,4 @@
-name: Deploy to ECS
+name: Build & Deploy to ECS
 
 on:
   workflow_dispatch:
@@ -85,7 +85,7 @@ jobs:
         run: 'echo "Environment: ${{ github.event.inputs.environment }}"'
 
       - name: 🚀 Deploy to ECS
-        uses: nehamic-tech/ecr-deploy-action@main
+        uses: ./.github/actions/ecr-deploy
         with:
           environment: ${{ github.event.inputs.environment }}
           service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
