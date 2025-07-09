@@ -19,7 +19,7 @@ jobs:
         service: [Service3]
 
     env:
-      SOLUTION_ROOT: SampleAspireSolution
+      SOLUTION_ROOT: src
       AWS_REGION: eu-west-2
       AWS_ACCOUNT_ID: 676673797772
       ECR_REGISTRY: 676673797772.dkr.ecr.eu-west-2.amazonaws.com
@@ -82,7 +82,7 @@ jobs:
         run: 'echo "Environment: ${{ github.event.inputs.environment }}"'
 
       - name: 🚀 Deploy to ECS
-        uses: Brett-Henning/Q-Logistical-Infrastructure/github-action_ecs-deploy@develop
+        uses: nehamic-tech/ecr-deploy-action@main
         with:
           environment: ${{ github.event.inputs.environment }}
           service_path: ${{ env.SOLUTION_ROOT }}/${{ matrix.service }}
