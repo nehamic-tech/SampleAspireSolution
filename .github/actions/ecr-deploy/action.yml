@@ -21,7 +21,7 @@ inputs:
 
 runs:
   using: "docker"
-  image: "Dockerfile"
+  image: "docker.io/nehamictech/iac-image:latest"
   env:
     ENVIRONMENT: ${{ inputs.environment }}
     IMAGE_URI: ${{ inputs.image_uri }}
