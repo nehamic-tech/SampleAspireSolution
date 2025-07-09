@@ -85,11 +85,12 @@ jobs:
 
       - name: 🚀 Deploy to ECS
         uses: ./.github/actions/ecr-deploy
-        with:
+        with:          
           environment: ${{ github.event.inputs.environment }}
           service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
           image_uri: ${{ env.ECR_REGISTRY }}/${{ matrix.service }}:${{ steps.config.outputs.version }}
         env:
+          ACTION: apply
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
