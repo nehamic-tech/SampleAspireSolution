@@ -34,6 +34,9 @@ jobs:
           key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
           restore-keys: terraform-${{ runner.os }}-
 
+      - name: 🧾 Checkout repo
+        uses: actions/checkout@v4
+
       - name: 🚀 Update ECS
         uses: ./.github/actions/ecr-deploy
         with:
