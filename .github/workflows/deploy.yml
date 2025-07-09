@@ -20,6 +20,7 @@ jobs:
 
     env:
       SOLUTION_ROOT: src
+      SOLUTION_NAME: SampleAspireSolution
       AWS_REGION: eu-west-2
       AWS_ACCOUNT_ID: 676673797772
       ECR_REGISTRY: 676673797772.dkr.ecr.eu-west-2.amazonaws.com
@@ -38,7 +39,7 @@ jobs:
           dotnet-version: "9.0.x"
 
       - name: 📦 Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_ROOT }}/Infrastructure.sln
+        run: dotnet restore ${{SOLUTION_NAME}}.sln
 
       - name: ✨ Generate lowercase service names
         run: echo "SERVICE_NAME_LOWER=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
