@@ -10,4 +10,4 @@ env_vars:
   SERVICE3_URL: http://service3.dev.local:8080
 
 cloudwatch:
-  retention_days: 2
+  retention_days: 1

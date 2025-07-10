@@ -7,4 +7,4 @@ env_vars:
   ASPNETCORE_ENVIRONMENT: Development
 
 cloudwatch:
-  retention_days: 2
+  retention_days: 1
