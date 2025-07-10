@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
+builder.Logging.AddConsole();
 var app = builder.Build();
 app.MapDefaultEndpoints();
 

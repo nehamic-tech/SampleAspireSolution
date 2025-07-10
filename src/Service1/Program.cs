@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
+builder.Logging.AddConsole();
 var service2Url = Environment.GetEnvironmentVariable("SERVICE2_URL");
 var service3Url = Environment.GetEnvironmentVariable("SERVICE3_URL");
 
