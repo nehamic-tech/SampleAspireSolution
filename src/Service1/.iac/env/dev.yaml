@@ -8,3 +8,6 @@ env_vars:
   ASPNETCORE_ENVIRONMENT: Development
   SERVICE2_URL: http://service2.dev.local:8080
   SERVICE3_URL: http://service3.dev.local:8080
+
+cloudwatch:
+  retention_days: 2
