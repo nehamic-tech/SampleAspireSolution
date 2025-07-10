@@ -5,6 +5,8 @@ builder.Logging.AddConsole();
 var service2Url = Environment.GetEnvironmentVariable("SERVICE2_URL");
 var service3Url = Environment.GetEnvironmentVariable("SERVICE3_URL");
 
+Console.WriteLine($"Service2 URL: {service2Url}");
+
 builder.Services.AddHttpClient("Service2", client =>
 {
     client.BaseAddress = new Uri(service2Url!);
