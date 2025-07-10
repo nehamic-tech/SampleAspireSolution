@@ -4,13 +4,6 @@ task_count:
   min: 1
   max: 1
 
-health_check:
-  path: "/health"
-  interval: 30
-  timeout: 5
-  healthy_threshold: 2
-  unhealthy_threshold: 2
-
 env_vars:
   ASPNETCORE_ENVIRONMENT: Development
   SERVICE2_URL: http://service2.dev.local:8080
