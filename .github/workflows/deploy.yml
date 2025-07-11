@@ -104,7 +104,7 @@ jobs:
         run: |
           IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
-          docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.CODE_ROOT }}/${{ matrix.service }}/Dockerfile ${{ env.CODE_ROOT }}/${{ matrix.service }}
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.CODE_ROOT }}/${{ matrix.service }}/Dockerfile ${{ env.CODE_ROOT }}
 
       - name: ⏭️ Skip Docker build (no changes)
         if: steps.changes.outputs.changed == 'false'
