@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [Service1, Service2]
+        service: [Service1, Service2, Service3]
     env:
       CODE_ROOT: src
       SOLUTION_NAME: SampleAspireSolution
