@@ -102,7 +102,7 @@ jobs:
       - name: 🐳 Build Docker image
         if: steps.changes.outputs.changed == 'true'
         run: |
-          IMAGE_NAME="${ECR_REGISTRY}/${{ steps.name.outputs.lower }}"
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
           docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.CODE_ROOT }}/${{ matrix.service }}/Dockerfile ${{ env.CODE_ROOT }}/${{ matrix.service }}
 
@@ -113,7 +113,7 @@ jobs:
       - name: 🚀 Push Docker image to ECR
         if: steps.changes.outputs.changed == 'true'
         run: |
-          IMAGE_NAME="${ECR_REGISTRY}/${{ steps.name.outputs.lower }}"
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
           docker push $IMAGE_NAME:$IMAGE_TAG
 
@@ -122,7 +122,7 @@ jobs:
         with:
           environment: ${{ github.event.inputs.environment }}
           service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
-          image_uri: ${{ env.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}:${{ steps.config.outputs.version }}
+          image_uri: ${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}:${{ steps.config.outputs.version }}
         env:
           ACTION: apply
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
