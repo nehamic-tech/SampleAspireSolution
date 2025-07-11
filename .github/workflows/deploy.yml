@@ -7,10 +7,14 @@ on:
         description: "Environment to deploy to (dev, prod, etc.)"
         required: true
         default: "dev"
+      force_rebuild:
+        description: "Force rebuild and push Docker image"
+        required: false
+        default: "false"
 
 jobs:
   build:
-    name: Build and Deploy Services
+    name: Build and Deploy
     runs-on: ubuntu-latest
 
     strategy:
@@ -19,10 +23,6 @@ jobs:
     env:
       CODE_ROOT: src
       SOLUTION_NAME: SampleAspireSolution
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
     steps:
       - name: ♻️ Cache terraform plugins
@@ -35,49 +35,81 @@ jobs:
 
       - name: 🧾 Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Required for git diff to work
 
       - name: 🔧 Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
 
-      - name: 📦 Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_NAME }}.sln
-
-      - name: ✨ Generate lowercase service names
-        run: echo "SERVICE_NAME_LOWER=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: ✨ Generate lowercase service name
+        id: name
+        run: echo "lower=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: 🏷️ Read version from service.yaml
         id: config
         run: |
           IMAGE_TAG=$(yq '.service.version // "latest"' ${{ env.CODE_ROOT }}/${{ matrix.service }}/.iac/service.yaml)
           echo "version=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-        env:
-          CODE_ROOT: ${{ env.CODE_ROOT }}
+
+      - name: 🕵️ Detect code changes or force rebuild
+        id: changes
+        run: |
+          if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
+            echo "Force rebuild requested"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet HEAD^ HEAD -- ${{ env.CODE_ROOT }}; then
+            echo "No changes detected"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changes detected"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 📦 Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_NAME }}.sln
 
       - name: 🛠️ Build code
+        if: steps.changes.outputs.changed == 'true'
         run: |
           dotnet build ${{ env.CODE_ROOT }}/${{ matrix.service }}/${{ matrix.service }}.csproj --no-restore --configuration Release
 
-      - name: 🔐 Log in to ecr
+      - name: ⏭️ Skip .NET build (no changes)
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "No changes in code. Skipping .NET build."
+
+      - name: 🔐 Log in to ECR
         uses: aws-actions/amazon-ecr-login@v2
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 🏗️ Create ECR repository if not exists
         run: |
-          aws ecr describe-repositories --repository-names "$SERVICE_NAME_LOWER" || \
-          aws ecr create-repository --repository-name "$SERVICE_NAME_LOWER"
+          aws ecr describe-repositories --repository-names "${{ steps.name.outputs.lower }}" || \
+          aws ecr create-repository --repository-name "${{ steps.name.outputs.lower }}"
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 🐳 Build Docker image
+        if: steps.changes.outputs.changed == 'true'
         run: |
-          IMAGE_NAME="${ECR_REGISTRY}/${SERVICE_NAME_LOWER}"
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
           docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.CODE_ROOT }}/${{ matrix.service }}/Dockerfile .
 
+      - name: ⏭️ Skip Docker build (no changes)
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "No changes in code. Skipping Docker build."
+
       - name: 🚀 Push Docker image to ECR
+        if: steps.changes.outputs.changed == 'true'
         run: |
-          IMAGE_NAME="${ECR_REGISTRY}/${SERVICE_NAME_LOWER}"
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
           docker push $IMAGE_NAME:$IMAGE_TAG
 
@@ -86,7 +118,7 @@ jobs:
         with:
           environment: ${{ github.event.inputs.environment }}
           service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
-          image_uri: ${{ env.ECR_REGISTRY }}/${{ env.SERVICE_NAME_LOWER }}:${{ steps.config.outputs.version }}
+          image_uri: ${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}:${{ steps.config.outputs.version }}
         env:
           ACTION: apply
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
