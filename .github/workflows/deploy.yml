@@ -63,7 +63,7 @@ jobs:
           if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
             echo "Force rebuild requested"
             echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet HEAD^ HEAD -- ${{ env.CODE_ROOT }}/${{ matrix.service }}; then
+          elif git diff --quiet HEAD^ HEAD -- ${{ env.CODE_ROOT }}; then
             echo "No changes detected"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
