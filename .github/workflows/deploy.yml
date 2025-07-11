@@ -36,7 +36,7 @@ jobs:
       - name: 🧾 Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Required for git diff to work
+          fetch-depth: 2 # Fetch all history for accurate diff detection
 
       - name: 🔧 Set up .NET
         uses: actions/setup-dotnet@v4
