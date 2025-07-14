@@ -1,5 +1,4 @@
-name: .NET build and test
-
+name: .NET build
 on:
   push:
     branches:
@@ -10,7 +9,7 @@ on:
       - "feature/*"
       - "feat/*"
 
-run-name: "🔧 Build & Test on ${{ github.ref_name }}"
+run-name: "🔧 Build & test on ${{ github.ref_name }}"
 
 jobs:
   build-and-test:
