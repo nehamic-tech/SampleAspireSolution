@@ -11,6 +11,8 @@ on:
       - "feat/*"
   workflow_dispatch:
 
+run-name: "🔧 Build & Test on ${{ github.ref_name }}"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
