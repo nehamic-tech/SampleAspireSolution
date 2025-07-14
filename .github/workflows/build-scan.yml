@@ -1,7 +1,9 @@
 name: .NET build and scan
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - develop
 
 run-name: "🔧 build, test & scan on ${{ github.ref_name }}"
 
