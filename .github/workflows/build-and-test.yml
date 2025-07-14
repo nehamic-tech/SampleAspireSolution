@@ -1,6 +1,9 @@
 name: .NET Build and Test
 
 on:
+  workflow_dispatch:
+    - "feature/*"
+    - "feat/*"
   push:
     branches:
       - "feature/*"
@@ -9,7 +12,6 @@ on:
     branches:
       - "feature/*"
       - "feat/*"
-  workflow_dispatch:
 
 run-name: "🔧 Build & Test on ${{ github.ref_name }}"
 
