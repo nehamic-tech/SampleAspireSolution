@@ -1,9 +1,6 @@
 name: .NET Build and Test
 
 on:
-  workflow_dispatch:
-    - "feature/*"
-    - "feat/*"
   push:
     branches:
       - "feature/*"
