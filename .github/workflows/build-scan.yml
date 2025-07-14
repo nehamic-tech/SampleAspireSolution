@@ -10,8 +10,14 @@ run-name: "🔧 build, test & scan on ${{ github.ref_name }}"
 jobs:
   build-and-analyze:
     runs-on: ubuntu-latest
-
     steps:
+      - name: 🔍 Check secrets are defined
+        run: |
+          [[ -z "${{ secrets.SONAR_PROJECT_KEY }}" ]] && echo "SONAR_PROJECT_KEY is EMPTY" && exit 1
+          [[ -z "${{ secrets.SONAR_HOST_URL }}" ]] && echo "SONAR_HOST_URL is EMPTY" && exit 1
+          [[ -z "${{ secrets.SONAR_TOKEN }}" ]] && echo "SONAR_TOKEN is EMPTY" && exit 1
+          echo "✅ All required secrets are present"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
