@@ -49,7 +49,7 @@ jobs:
 
       - name: SonarQube Begin Analysis
         run: |
-          ./.sonarscanner/tools/dotnet-sonarscanner begin /k:"${{ secrets.SONAR_PROJECT_KEY }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          ./.sonarscanner/tools/dotnet-sonarscanner begin /k:"${{ secrets.SONAR_PROJECT_KEY }}" /d:sonar.host.url="https://sonarqube.dev.qlogistical.com/" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
       - name: Restore dependencies
         run: dotnet restore
