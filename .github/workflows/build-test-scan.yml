@@ -1,15 +1,12 @@
-name: .NET Build, Test and Sonar Scan
+name: .NET Build, Test and Scan
 
 on:
   push:
     branches-ignore:
       - main
-  pull_request:
-    branches:
-      - develop
   workflow_dispatch:
 
-run-name: "🔧 Build, Test & Sonar on ${{ github.ref_name }}"
+run-name: "🔧 build, test & scan on ${{ github.ref_name }}"
 
 jobs:
   build-and-analyze:
