@@ -1,0 +1,78 @@
+name: .NET build and scan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarScanner
+        uses: highbyte/sonarscan-dotnet@v2.4.2
+        with:
+          sonarProjectKey: ${{ secrets.SONAR_PROJECT_KEY }}
+          sonarProjectName: "SampleAspireSolution"
+          sonarHostname: "https://sonarqube.dev.qlogistical.com/"
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # build-and-analyze:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 🔍 Check secrets are defined
+  #       run: |
+  #         [[ -z "${{ secrets.SONAR_PROJECT_KEY }}" ]] && echo "SONAR_PROJECT_KEY is EMPTY" && exit 1
+  #         [[ -z "${{ secrets.SONAR_HOST_URL }}" ]] && echo "SONAR_HOST_URL is EMPTY" && exit 1
+  #         [[ -z "${{ secrets.SONAR_TOKEN }}" ]] && echo "SONAR_TOKEN is EMPTY" && exit 1
+  #         echo "✅ All required secrets are present"
+
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0 # needed for Sonar
+
+  #     - name: Setup .NET SDK
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: "9.0.x" # adjust to your version
+
+  #     - name: Cache SonarQube packages
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: ~/.sonar/cache
+  #         key: ${{ runner.os }}-sonar
+  #         restore-keys: ${{ runner.os }}-sonar
+
+  #     - name: Cache SonarScanner .NET tool
+  #       id: cache-sonar-scanner
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: .sonarscanner/tools
+  #         key: ${{ runner.os }}-sonar-scanner
+  #         restore-keys: ${{ runner.os }}-sonar-scanner
+
+  #     - name: Install SonarScanner .NET tool
+  #       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+  #       run: dotnet tool install dotnet-sonarscanner --tool-path ./.sonarscanner/tools
+
+  #     - name: SonarQube Begin Analysis
+  #       run: |
+  #         ./.sonarscanner/tools/dotnet-sonarscanner begin /k:"${{ secrets.SONAR_PROJECT_KEY }}" /d:sonar.host.url="https://sonarqube.dev.qlogistical.com/" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
+  #     - name: Restore dependencies
+  #       run: dotnet restore
+
+  #     - name: Build
+  #       run: dotnet build --no-restore --configuration Release
+
+  #     - name: Run tests
+  #       run: dotnet test --no-build --configuration Release --verbosity normal
+
+  #     - name: SonarQube End Analysis
+  #       run: |
+  #         ./.sonarscanner/tools/dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
