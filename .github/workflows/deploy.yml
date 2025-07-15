@@ -3,12 +3,8 @@ name: Build & Deploy to ECS
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment to deploy to (dev, prod, etc.)"
-        required: true
-        default: "dev"
       force_rebuild:
-        description: "Force rebuild and push Docker image"
+        description: "Force rebuild and redeploy"
         required: false
         default: "false"
 
@@ -20,6 +16,7 @@ jobs:
     strategy:
       matrix:
         service: [Service1]
+
     env:
       CODE_ROOT: src
       SOLUTION_NAME: SampleAspireSolution
@@ -36,18 +33,22 @@ jobs:
       - name: 🧾 Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Fetch all history for accurate diff detection
+          fetch-depth: 2
 
       - name: 🔧 Set up .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
-      - name: Set environment name
+
+      - name: 🧠 Infer environment from branch
         run: |
           BRANCH="${GITHUB_REF_NAME}"
-          if [[ "$BRANCH" == "main" ]]; then ENVIRONMENT="prod"
-          elif [[ "$BRANCH" == "stg" ]]; then ENVIRONMENT="stg"
-          else ENVIRONMENT="dev"
+          if [[ "$BRANCH" == "main" ]]; then
+            ENVIRONMENT="prod"
+          elif [[ "$BRANCH" == "stg" ]]; then
+            ENVIRONMENT="stg"
+          else
+            ENVIRONMENT="dev"
           fi
           echo "ENVIRONMENT=$ENVIRONMENT" >> "$GITHUB_ENV"
 
@@ -58,7 +59,7 @@ jobs:
       - name: 🏷️ Read version from service.yaml
         id: config
         run: |
-          IMAGE_TAG=$(yq '.service.version // "latest"' ${{ env.CODE_ROOT }}/${{ matrix.service }}/.iac/${ENVIRONMENT}.yaml)
+          IMAGE_TAG=$(yq '.service.version // "latest"' "$CODE_ROOT/${{ matrix.service }}/.iac/${ENVIRONMENT}.yaml")
           echo "version=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: 🕵️ Detect code changes or force rebuild
@@ -67,7 +68,7 @@ jobs:
           if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
             echo "Force rebuild requested"
             echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet HEAD^ HEAD -- ${{ env.CODE_ROOT }}; then
+          elif git diff --quiet HEAD^ HEAD -- "$CODE_ROOT"; then
             echo "No changes detected"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
@@ -76,39 +77,35 @@ jobs:
           fi
 
       - name: 📦 Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_NAME }}.sln
+        run: dotnet restore "${{ env.SOLUTION_NAME }}.sln"
 
       - name: 🛠️ Build code
         if: steps.changes.outputs.changed == 'true'
         run: |
-          dotnet build ${{ env.CODE_ROOT }}/${{ matrix.service }}/${{ matrix.service }}.csproj --no-restore --configuration Release
+          dotnet build "$CODE_ROOT/${{ matrix.service }}/${{ matrix.service }}.csproj" --no-restore --configuration Release
 
       - name: ⏭️ Skip .NET build (no changes)
         if: steps.changes.outputs.changed == 'false'
         run: echo "No changes in code. Skipping .NET build."
 
-      - name: 🔐 Log in to ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: 🏗️ Create ECR repository if not exists
         run: |
           aws ecr describe-repositories --repository-names "${{ steps.name.outputs.lower }}" || \
           aws ecr create-repository --repository-name "${{ steps.name.outputs.lower }}"
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: 🐳 Build Docker image
         if: steps.changes.outputs.changed == 'true'
         run: |
           IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
-          docker build -t $IMAGE_NAME:$IMAGE_TAG -f ${{ env.CODE_ROOT }}/${{ matrix.service }}/Dockerfile .
+          docker build -t "$IMAGE_NAME:$IMAGE_TAG" -f "$CODE_ROOT/${{ matrix.service }}/Dockerfile" .
 
       - name: ⏭️ Skip Docker build (no changes)
         if: steps.changes.outputs.changed == 'false'
@@ -119,12 +116,12 @@ jobs:
         run: |
           IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
           IMAGE_TAG="${{ steps.config.outputs.version }}"
-          docker push $IMAGE_NAME:$IMAGE_TAG
+          docker push "$IMAGE_NAME:$IMAGE_TAG"
 
       - name: 🚀 Deploy to ECS
         uses: ./.github/actions/ecr-deploy
         with:
-          environment: ${{ github.event.inputs.environment }}
+          environment: ${{ env.ENVIRONMENT }}
           service_path: ${{ env.CODE_ROOT }}/${{ matrix.service }}
           image_uri: ${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}:${{ steps.config.outputs.version }}
         env:
