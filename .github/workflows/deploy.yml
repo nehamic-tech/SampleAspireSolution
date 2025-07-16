@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [Service1, Service2, Service3]
+        service: [Service2]
 
     defaults:
       run:
