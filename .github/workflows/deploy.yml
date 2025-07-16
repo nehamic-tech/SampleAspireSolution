@@ -77,6 +77,10 @@ jobs:
           aws ecr describe-repositories --repository-names "${{ steps.name.outputs.lower }}" >/dev/null 2>&1 || \
           aws ecr create-repository --repository-name "${{ steps.name.outputs.lower }}"
 
+      - name: 🔐 Authenticate Docker to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
       - name: 🐳 Build Docker image
         run: |
           IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ steps.name.outputs.lower }}"
