@@ -2,9 +2,7 @@ service:
   name: service1
   version: 1.0.0
   type: app
-  task_count:
-    min: 1
-    max: 1
+  task_count: 1
   cpu: 256
   memory: 512
   logs_retention: 1
