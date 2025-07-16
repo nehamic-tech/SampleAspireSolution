@@ -35,9 +35,10 @@ app.MapGet("/internal", async (IHttpClientFactory httpClientFactory) =>
 
 app.MapGet("/external", async (IHttpClientFactory httpClientFactory) =>
 {
+    var x = 1;
     var client = httpClientFactory.CreateClient("Service3");
     var response = await client.GetAsync("/service");
-    return await response.Content.ReadAsStringAsync();
+    return await response.Content.ReadAsStringAsync();    
 });
 
 app.Run();
