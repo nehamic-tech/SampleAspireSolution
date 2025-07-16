@@ -59,6 +59,8 @@ jobs:
 
       - name: 🔐 Log in to ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: 🏗️ Create ECR repository if not exists
         run: |
