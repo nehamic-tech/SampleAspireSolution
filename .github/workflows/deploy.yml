@@ -27,8 +27,6 @@ jobs:
 
       - name: 🧾 Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: 🔧 Set up .NET
         uses: actions/setup-dotnet@v4
@@ -59,17 +57,7 @@ jobs:
 
       - name: 🕵️ Detect code changes or force rebuild
         id: changes
-        run: |
-          if [[ "${{ github.event.inputs.force_rebuild }}" == "true" ]]; then
-            echo "Force rebuild requested"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet HEAD^ HEAD -- "$CODE_ROOT"; then
-            echo "No changes detected"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Changes detected"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: 📦 Restore dependencies
         run: dotnet restore "${{ env.SOLUTION_NAME }}.sln"
