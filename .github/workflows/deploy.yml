@@ -2,11 +2,6 @@ name: Build & Deploy to ECS
 
 on:
   workflow_dispatch:
-    inputs:
-      force_rebuild:
-        description: "Force rebuild and redeploy"
-        required: false
-        default: "false"
 
 jobs:
   build:
