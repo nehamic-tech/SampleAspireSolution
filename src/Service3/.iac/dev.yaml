@@ -1,0 +1,4 @@
+service:
+  name: service3
+  version: 1.0.0
+  type: api
