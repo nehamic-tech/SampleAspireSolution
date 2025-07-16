@@ -2,11 +2,6 @@ name: Deploy to ECS
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy to (dev, prod, etc.)"
-        required: true
-        default: "dev"
 
 jobs:
   deploy:
@@ -47,7 +42,7 @@ jobs:
           dotnet-version: "9.0.x"
 
       - name: 📦 Restore dependencies
-        run: dotnet restore ${{ var.SOLUTION_NAME }}.sln
+        run: dotnet restore ${{ env.SOLUTION_NAME }}.sln
 
       - name: ✨ Generate lowercase service names
         run: echo "SERVICE_NAME_LOWER=$(echo '${{ matrix.service }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
